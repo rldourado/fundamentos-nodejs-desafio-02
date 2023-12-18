@@ -8,43 +8,32 @@ export async function usersRoutes(app: FastifyInstance) {
     console.log(`[${request.method}] ${request.url}`)
   })
 
-  app.get(
-    '/',
-    async (request) => {
-      const { sessionId } = request.cookies
+  app.get('/', async () => {
+    const users = await knex('users').select()
 
-      const users = await knex('users')
-        .select()
+    return { users }
+  })
 
-      return { users }
-    },
-  )
+  app.get('/:id', async (request, reply) => {
+    const getUserParamsSchema = z.object({
+      id: z.string().uuid(),
+    })
 
-  app.get(
-    '/:id',
-    async (request, reply) => {
-      const { sessionId } = request.cookies
+    const { id } = getUserParamsSchema.parse(request.params)
 
-      const getUserParamsSchema = z.object({
-        id: z.string().uuid(),
+    reply.cookie('user_id', id, {
+      path: '/',
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    })
+
+    const user = await knex('users')
+      .where({
+        id,
       })
+      .first()
 
-      const { id } = getUserParamsSchema.parse(request.params)
-  
-      reply.cookie('userId', id, {
-        path: '/',
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-      })
-  
-      const user = await knex('users')
-        .where({
-          id,
-        })
-        .first()
-
-      return { user }
-    },
-  )
+    return { user }
+  })
 
   app.post('/', async (request, reply) => {
     // { name }
@@ -53,9 +42,7 @@ export async function usersRoutes(app: FastifyInstance) {
       name: z.string(),
     })
 
-    const { name } = createTransactionBodySchema.parse(
-      request.body,
-    )
+    const { name } = createTransactionBodySchema.parse(request.body)
 
     await knex('users').insert({
       id: randomUUID(),

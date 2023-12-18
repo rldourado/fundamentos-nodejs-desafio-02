@@ -1,7 +1,7 @@
 {
   "name": "fundamentos-nodejs-desafio-02",
   "version": "1.0.0",
-  "description": "## Daily Diet API",
+  "description": "Daily Diet API",
   "main": "index.js",
   "engines": {
     "node": "20"

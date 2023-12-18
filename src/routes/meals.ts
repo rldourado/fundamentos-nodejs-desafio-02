@@ -15,13 +15,13 @@ export async function mealsRoutes(app: FastifyInstance) {
       preHandler: [checkUserIdExists],
     },
     async (request) => {
-      const { userId } = request.cookies
+      const { user_id } = request.cookies
 
-      console.log(`userId: ${userId}`)
+      console.log(`user_id: ${user_id}`)
 
       const meals = await knex('meals')
         .where({
-          user_id: userId,
+          user_id,
         })
         .select()
 
@@ -35,54 +35,48 @@ export async function mealsRoutes(app: FastifyInstance) {
       preHandler: [checkUserIdExists],
     },
     async (request) => {
-      const { userId } = request.cookies
+      const { user_id } = request.cookies
 
-      const getUserParamsSchema = z.object({
+      const getMealParamsSchema = z.object({
         id: z.string().uuid(),
       })
 
-      const { id } = getUserParamsSchema.parse(request.params)
+      const { id } = getMealParamsSchema.parse(request.params)
 
-      const user = await knex('users')
+      const meal = await knex('meals')
         .where({
-          user_id: userId,
+          user_id,
           id,
         })
         .first()
 
-      return { user }
+      return { meal }
     },
   )
 
   app.post('/', async (request, reply) => {
-    // { description, meal_time, in_diet, user_id }
+    // { name, description, meal_time, in_diet, user_id }
 
-    const createTransactionBodySchema = z.object({
+    const createMealBodySchema = z.object({
+      name: z.string(),
       description: z.string(),
-      meal_time: z.number(),
-      type: z.enum(['credit', 'debit']),
+      meal_time: z.string(),
+      in_diet: z.boolean(),
     })
 
-    const { title, amount, type } = createTransactionBodySchema.parse(
+    const { name, description, meal_time, in_diet } = createMealBodySchema.parse(
       request.body,
     )
 
-    let sessionId = request.cookies.sessionId
+    const { user_id } = request.cookies
 
-    if (!sessionId) {
-      sessionId = randomUUID()
-
-      reply.cookie('sessionId', sessionId, {
-        path: '/',
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-      })
-    }
-
-    await knex('transactions').insert({
+    await knex('meals').insert({
       id: randomUUID(),
-      title,
-      amount: type === 'credit' ? amount : amount * -1,
-      session_id: sessionId,
+      name,
+      description,
+      meal_time,
+      in_diet,
+      user_id,
     })
 
     return reply.status(201).send()

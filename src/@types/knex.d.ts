@@ -1,5 +1,4 @@
 // eslint-disable-next-line
-import { Knex } from 'knex'
 
 declare module 'knex/types/tables' {
   export interface Tables {
@@ -9,10 +8,11 @@ declare module 'knex/types/tables' {
 
       created_at: string
       updated_at: string
-    },
+    }
 
     meals: {
       id: string
+      name: string
       description: string
       meal_time: string
       in_diet: boolean
